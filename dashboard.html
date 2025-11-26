@@ -750,6 +750,59 @@ function cancelBooking(id){
   window.routeToStation = routeToStation;
   window.renderMarkers = renderMarkers;
   </script>
+  <script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+  import { getDatabase, ref, push, set } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+  // FIREBASE CONFIG (तुझा)
+  const firebaseConfig = {
+    apiKey: "AIzaSyBfLw6olf_adEl2w2ctaLrx1rAXorKl3vE",
+    authDomain: "smartev-booking.firebaseapp.com",
+    databaseURL: "https://smartev-booking-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId: "smartev-booking",
+    storageBucket: "smartev-booking.firebasestorage.app",
+    messagingSenderId: "687967318739",
+    appId: "1:687967318739:web:49502261c6571c34e85a26",
+    measurementId: "G-DDMGL6MGCL"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getDatabase(app);
+
+  // SLOT BOOK FUNCTION
+  function bookSlot(slot, date, time, username) {
+    const bookingsRef = ref(db, "bookings/");
+    const newBooking = push(bookingsRef);
+
+    set(newBooking, {
+      slot: slot,
+      date: date,
+      time: time,
+      username: username,
+      status: "booked"
+    })
+    .then(() => {
+      alert("Slot Booked Successfully ✔️");
+    })
+    .catch((error) => {
+      alert("Error: " + error);
+    });
+  }
+
+  // ही function बटणावर call करा
+  window.confirmBooking = function () {
+    let slot = document.getElementById("slot").value;
+    let date = document.getElementById("date").value;
+    let time = document.getElementById("time").value;
+    let username = document.getElementById("username").value;
+
+    if (slot && date && time && username) {
+      bookSlot(slot, date, time, username);
+    } else {
+      alert("Please fill all details!");
+    }
+  }
+</script>
 </body>
 </html>
  <!-- NEXT BUTTON -->
@@ -808,6 +861,7 @@ function cancelBooking(id){
   .then(res => alert("Booking Successful"));
 }
 </script>
+
 
 
 
