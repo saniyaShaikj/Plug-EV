@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EV Charging Payment</title>
+<style>
+  body { font-family: Arial,sans-serif; padding:20px; background:#f5f7fa; }
+  .card { background:#fff; padding:20px; border-radius:10px; max-width:400px; margin:auto; box-shadow:0 4px 12px rgba(0,0,0,0.1); }
+  h2 { color:#007BFF; }
+  .row { margin:10px 0; }
+  #qrCode { margin-top:20px; text-align:center; }
+  button { background:#28a745; color:#fff; border:none; padding:10px 15px; border-radius:6px; cursor:pointer; }
+</style>
+</head>
+<body>
+  <div class="card">
+    <h2>💳 EV Charging Payment</h2>
+    <div class="row"><b>Station:</b> <span id="stationName"></span></div>
+    <div class="row"><b>Date & Time:</b> <span id="dateTime"></span></div>
+    <div class="row"><b>Duration (hrs):</b> <span id="duration"></span></div>
+    <div class="row"><b>Approx. Amount:</b> ₹<span id="amount"></span></div>
+
+    <div id="qrCode"></div>
+
+    <button id="payBtn">Pay Now</button>
+  </div>
+
+  <!-- QR Code library -->
+  <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
+  <script>
+    // Fetch booking from localStorage
+    const booking = JSON.parse(localStorage.getItem('pendingPayment'));
+    if (!booking) {
+      alert('No booking found! Go back and select a slot.');
+      window.location.href = 'dashboard.html';
+    }
+
+    const stationEl = document.getElementById('stationName');
+    const dateTimeEl = document.getElementById('dateTime');
+    const durationEl = document.getElementById('duration');
+    const amountEl = document.getElementById('amount');
+    const qrCodeEl = document.getElementById('qrCode');
+
+    stationEl.textContent = booking.station;
+    dateTimeEl.textContent = booking.date + ' ' + booking.time;
+    durationEl.textContent = booking.duration;
+
+    // Approx. pricing rule: e.g., ₹20 per hour
+    const ratePerHour = 20;
+    const amount = booking.duration * ratePerHour;
+    amountEl.textContent = amount;
+
+    // Generate QR code (e.g., Cashfree / GPay URL)
+    const paymentUrl = `https://cashfree.com/pay?amount=${amount}&station=${encodeURIComponent(booking.station)}&date=${booking.date}&time=${booking.time}&duration=${booking.duration}`;
+    QRCode.toCanvas(qrCodeEl, paymentUrl, { width:200 }, function (error) {
+      if (error) console.error(error);
+    });
+
+    document.getElementById('payBtn').addEventListener('click', () => {
+      // redirect to payment URL
+      window.open(paymentUrl, '_blank');
+    });
+  </script>
+</body>
+</html>
