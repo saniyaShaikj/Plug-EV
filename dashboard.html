@@ -583,37 +583,6 @@ const stationIcon = L.icon({
     renderMarkers(); // update popups and counts
     alert(`Booked ${booking.station} on ${booking.date} at ${booking.time} (Gun ${booking.gun})`);
   }
-function sendBooking(booking) {
-  fetch("YOUR_WEB_APP_URL", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      id: booking.id,
-      user: booking.user,
-      station: booking.station,
-      date: booking.date,
-      time: booking.time,
-      gun: booking.gun,
-      duration: booking.duration,
-      status: "Pending"
-    })
-  })
-  .then(res => res.json())
-  .then(data => alert("Booking sent to server successfully!"))
-  .catch(err => console.error("Error sending booking:", err));
-}
- all.push(booking);
-saveAllBookings(all);
-logStation(`✅ Booking: ${booking.station} | ${booking.date} ${booking.time} | Gun ${booking.gun} | By ${booking.user}`);
-renderBookings();
-loadSlotGrid();
-renderMarkers(); // update popups and counts
-alert(`Booked ${booking.station} on ${booking.date} at ${booking.time} (Gun ${booking.gun})`);
-
-// Add this line to send to your backend
-sendBooking(booking);
-
-
   // Render bookings list (for this user; show all)
   // Render bookings list (for this user; show all)
 function renderBookings(){
@@ -827,7 +796,8 @@ function cancelBooking(id){
 });
 
 </script>
-<button onclick="sendBooking()">Book Now</button>
+
+
 
 
 
