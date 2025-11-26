@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Smart EV Charging Station - Sign Up</title>
+<style>
+body {
+    font-family: Arial, sans-serif;
+    background-image: url('bg2.jpg'); /* EV-themed background image */
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-position: center;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+}
+.signup-container {
+    background-color: rgba(255, 255, 255, 0.95);
+    padding: 30px 40px;
+    border-radius: 10px;
+    box-shadow: 0 0 15px rgba(0,0,0,0.3);
+    width: 400px;
+    text-align: center;
+}
+.signup-container h2 {
+    text-align: center;
+    margin-bottom: 10px;
+    color: #007BFF;
+}
+.signup-container p {
+    text-align: center;
+    margin-bottom: 20px;
+    color: #555;
+}
+input[type="text"], input[type="email"], input[type="password"], input[type="tel"], select {
+    width: 100%;
+    padding: 10px;
+    margin: 6px 0 15px 0;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
+button {
+    width: 100%;
+    padding: 12px;
+    background-color: #007BFF;
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+}
+button:hover {
+    background-color: #0056b3;
+}
+.login-link {
+    text-align: center;
+    margin-top: 15px;
+}
+.login-link a {
+    color: #007BFF;
+    text-decoration: none;
+}
+.login-link a:hover {
+    text-decoration: underline;
+}
+.note {
+    font-size: 12px;
+    color: #777;
+    text-align: center;
+    margin-top: 10px;
+}
+</style>
+</head>
+<body>
+<div class="signup-container">
+    <h2>Sign Up</h2>
+    <p>Join the Future of Smart EV Charging</p>
+    <form id="signupForm">
+        <input type="text" id="fullName" placeholder="Full Name" required>
+        <input type="email" id="email" placeholder="Email Address" required>
+        <input type="tel" id="phone" placeholder="Phone Number">
+        <input type="password" id="password" placeholder="Password" required>
+        <input type="password" id="confirmPassword" placeholder="Confirm Password" required>
+
+        <!-- Vehicle Type Dropdown -->
+        <select id="vehicleType" required>
+            <option value="">Select Vehicle Type</option>
+        </select>
+
+        <!-- Manufacturer Dropdown -->
+        <select id="manufacturer" required>
+            <option value="">Select Manufacturer</option>
+        </select>
+
+        <!-- Model Dropdown -->
+        <select id="model" required>
+            <option value="">Select Model</option>
+        </select>
+
+        <!-- Vehicle Name Input -->
+        <input type="text" id="vehicleName" placeholder="Vehicle Name" required>
+
+        <button type="submit">Sign Up Now</button>
+    </form>
+    <div class="login-link">
+        Already have an account? <a href="login2.html">Log In Here</a>
+    </div>
+    <div class="note">
+        By signing up, you agree to our Terms of Service and Privacy Policy.
+    </div>
+</div>
+
+<script>
+const apiKey = "YOUR_REAL_API_KEY_HERE"; // Replace with your API key
+
+// Default options if API fails
+const defaultVehicleTypes = [
+    { id: "car", name: "Four-Wheeler" },
+    { id: "autorickshaw", name: "Three-Wheeler" },
+    { id: "bike", name: "Two-Wheeler" }
+];
+
+const defaultManufacturers = [
+    { id: "tesla", name: "Tesla" },
+    { id: "tvs", name: "TVS" },
+    { id: "tata motors", name: "Tata Motors" },
+    { id: "mg motors", name: "MG Motors" },
+    { id: "hyundai", name: "Hyundai" },
+    { id: "ether energy", name: "Ether Energy" },
+    { id: "byd", name: "BYD" },
+    { id: "ola electric", name: "Ola Electric" },
+    { id: "hero electric", name: "Hero Electric" },
+    { id: "bajaj auto", name: "Bajaj Auto" },
+    { id: "ampere electric", name: "Ampere Electric" },
+    { id: "mahindra", name: "Mahindra" }
+];
+
+const defaultModels = [
+    { id: "model_s", name: "Model S" },
+    { id: "i_pulse", name: "i-Pulse" },
+    { id: "e2o_plus", name: "e2o Plus" }
+];
+
+function populateDropdown(selectId, items) {
+    const select = document.getElementById(selectId);
+    items.forEach(item => {
+        const option = document.createElement("option");
+        option.value = item.id;
+        option.textContent = item.name;
+        select.appendChild(option);
+    });
+}
+
+async function fetchDropdowns() {
+    try {
+        // Replace with your real API endpoints
+        const vehicleResponse = await fetch("https://example.com/vehicle-types", {
+            headers: { "Authorization": `Bearer ${apiKey}` }
+        });
+        const manufacturerResponse = await fetch("https://example.com/manufacturers", {
+            headers: { "Authorization": `Bearer ${apiKey}` }
+        });
+        const modelResponse = await fetch("https://example.com/models", {
+            headers: { "Authorization": `Bearer ${apiKey}` }
+        });
+
+        const vehicleData = vehicleResponse.ok ? await vehicleResponse.json() : defaultVehicleTypes;
+        const manufacturerData = manufacturerResponse.ok ? await manufacturerResponse.json() : defaultManufacturers;
+        const modelData = modelResponse.ok ? await modelResponse.json() : defaultModels;
+
+        populateDropdown("vehicleType", vehicleData);
+        populateDropdown("manufacturer", manufacturerData);
+        populateDropdown("model", modelData);
+
+    } catch (error) {
+        console.warn("API fetch failed, using defaults:", error);
+        populateDropdown("vehicleType", defaultVehicleTypes);
+        populateDropdown("manufacturer", defaultManufacturers);
+        populateDropdown("model", defaultModels);
+    }
+}
+
+// Populate dropdowns on page load
+window.onload = fetchDropdowns;
+
+// Handle signup form submission
+const form = document.getElementById("signupForm");
+form.addEventListener("submit", function(e){
+    e.preventDefault();
+
+    const fullName = document.getElementById("fullName").value;
+    const email = document.getElementById("email").value;
+    const password = document.getElementById("password").value;
+    const confirmPassword = document.getElementById("confirmPassword").value;
+    const vehicleType = document.getElementById("vehicleType").value;
+    const manufacturer = document.getElementById("manufacturer").value;
+    const model = document.getElementById("model").value;
+    const vehicleName = document.getElementById("vehicleName").value;
+
+    if(password !== confirmPassword){
+        alert("Passwords do not match!");
+        return;
+    }
+
+    if(localStorage.getItem(email)){
+        alert("Email already registered. Please login.");
+        window.location.href = "login.html";
+        return;
+    }
+
+    // Save user data in localStorage
+    localStorage.setItem(email, JSON.stringify({
+        fullName,
+        password,
+        vehicleType,
+        manufacturer,
+        model,
+        vehicleName
+    }));
+
+    alert("Sign Up successful! Redirecting to login...");
+    window.location.href = "login.html"; // Redirect to login page
+});
+</script>
+</body>
+</html>
