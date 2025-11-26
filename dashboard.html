@@ -583,7 +583,19 @@ const stationIcon = L.icon({
     renderMarkers(); // update popups and counts
     alert(`Booked ${booking.station} on ${booking.date} at ${booking.time} (Gun ${booking.gun})`);
   }
-
+function sendBooking() {
+  fetch("YOUR_WEB_APP_URL", {
+    method: "POST",
+    body: JSON.stringify({
+      name: document.getElementById("name").value,
+      station: document.getElementById("station").value,
+      date: document.getElementById("date").value,
+      time: document.getElementById("time").value,
+      status: "Pending"
+    })
+  })
+  .then(res => alert("Booking Successful"));
+}
   // Render bookings list (for this user; show all)
   // Render bookings list (for this user; show all)
 function renderBookings(){
@@ -797,6 +809,7 @@ function cancelBooking(id){
 });
 
 </script>
+<button onclick="sendBooking()">Book Now</button>
 
 
 
