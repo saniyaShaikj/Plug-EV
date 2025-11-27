@@ -750,40 +750,6 @@ function cancelBooking(id){
   window.routeToStation = routeToStation;
   window.renderMarkers = renderMarkers;
   </script>
-  <script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-  import { getDatabase, ref, push, set } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
-</script>
-  <script src="https://cdn.jsdelivr.net/npm/emailjs-com@3/dist/email.min.js"></script>
-<script>
-  // initialize
-  emailjs.init("8fv50CrgpZaHx_opd"); // ← replace
-
-  const form = document.getElementById('slotForm');
-  const status = document.getElementById('status');
-
-  form.addEventListener('submit', function(e) {
-    e.preventDefault();
-
-    // Build the template params object — keys must match your template variables
-    const params = {
-      name: form.name.value,
-      email: form.email.value,
-      slot: form.slot.value,
-      message: form.message.value
-    };
-
-    // send the template
-    emailjs.send("service_4umepsh", "template_4jb61rq", params)
-      .then(function(response) {
-        status.innerText = "Booking successful — station has been notified.";
-        form.reset();
-      }, function(error) {
-        console.error('EmailJS error:', error);
-        status.innerText = "Booking failed — please try again.";
-      });
-  });
-</script>
 </body>
 </html>
  <!-- NEXT BUTTON -->
@@ -842,6 +808,7 @@ function cancelBooking(id){
   .then(res => alert("Booking Successful"));
 }
 </script>
+
 
 
 
