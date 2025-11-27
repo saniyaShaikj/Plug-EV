@@ -80,7 +80,7 @@
     <!-- RIGHT: CONTROLS + Booking UI -->
     <div class="right">
       <div class="panel">
-        <h3 style="margin:0 0 8px 0;">🎟 Slot Booking</h3>
+        <h3 style="margin:0 0 8px 0;">🎟 Theatre-style Slot Booking</h3>
 
         <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
           <label class="small">Station</label>
@@ -555,8 +555,6 @@ const stationIcon = L.icon({
   // Confirm booking
   // -------------------------
   function confirmBooking(){
-    // This function runs when user clicks "Book"
-function confirmBooking() {
     if (!selected.station || !selected.date || !selected.time || !selected.gun){
       alert('Select station, date, time and gun from the grid.');
       return;
@@ -755,47 +753,39 @@ function cancelBooking(id){
   </script>
 </body>
 </html>
- <!-- NEXT BUTTON -->
-<button id="nextButton">Next ➡️</button>
-
+<!-- ✅ NEXT BUTTON (safe + compatible with geolocation) -->
 <style>
-  /* Floating Next button */
   #nextButton {
     position: fixed;
     bottom: 20px;
-    right: 20px;
-    background: var(--brand);
-    color: #fff;
+    right: 30px;
+    background-color: #007bff;
+    color: white;
     border: none;
-    padding: 12px 18px;
+    padding: 12px 24px;
     border-radius: 8px;
+    font-size: 16px;
     cursor: pointer;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-    font-weight: 600;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+    transition: background-color 0.3s ease;
     z-index: 9999;
-    transition: background 0.2s;
   }
-  #nextButton:hover { background: #0056b3; }
+
+  #nextButton:hover {
+    background-color: #0056b3;
+  }
 </style>
 
+<button id="nextButton">Next →</button>
+
 <script>
-  // Redirect to payment page when clicked
-  document.getElementById('nextButton').addEventListener('click', () => {
-  if (!selected.station || !selected.date || !selected.time || !selected.gun) {
-    alert('Please select a booking slot first.');
-    return;
-  }
-
-  // Save selected booking temporarily in localStorage
-  localStorage.setItem('pendingPayment', JSON.stringify({
-    station: selected.station,
-    date: selected.date,
-    time: selected.time,
-    gun: selected.gun,
-    duration: selected.duration
-  }));
-
-  window.location.href = 'payment.html';
-});
-
+  document.addEventListener("DOMContentLoaded", function() {
+    const btn = document.getElementById("nextButton");
+    if (btn) {
+      btn.addEventListener("click", function() {
+        window.location.href = "nextpage.html"; // change this to your next page
+      });
+    }
+  });
 </script>
+<!-- ✅ END OF NEXT BUTTON -->
