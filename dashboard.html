@@ -555,6 +555,8 @@ const stationIcon = L.icon({
   // Confirm booking
   // -------------------------
   function confirmBooking(){
+    // This function runs when user clicks "Book"
+function confirmBooking() {
     if (!selected.station || !selected.date || !selected.time || !selected.gun){
       alert('Select station, date, time and gun from the grid.');
       return;
@@ -583,6 +585,7 @@ const stationIcon = L.icon({
     renderMarkers(); // update popups and counts
     alert(`Booked ${booking.station} on ${booking.date} at ${booking.time} (Gun ${booking.gun})`);
   }
+
   // Render bookings list (for this user; show all)
   // Render bookings list (for this user; show all)
 function renderBookings(){
@@ -794,28 +797,5 @@ function cancelBooking(id){
 
   window.location.href = 'payment.html';
 });
-  function sendBooking() {
-  fetch("https://script.google.com/macros/s/AKfycbzByt78SK-h8fns4rexo_YYUTcl_yTts_yMuUN-ahMCUtBHWrpocAdqVswwoyg7jiCh/exec", {
-    method: "POST",
-    body: JSON.stringify({
-      name: document.getElementById("name").value,
-      station: document.getElementById("station").value,
-      date: document.getElementById("date").value,
-      time: document.getElementById("time").value,
-      status: "Pending"
-    })
-  })
-  .then(res => alert("Booking Successful"));
-}
+
 </script>
-
-
-
-
-
-
-
-
-
-
-
