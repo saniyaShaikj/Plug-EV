@@ -3,64 +3,96 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>EV Charging Payment</title>
+<title>EV Payment</title>
+
 <style>
-  body { font-family: Arial,sans-serif; padding:20px; background:#f5f7fa; }
-  .card { background:#fff; padding:20px; border-radius:10px; max-width:400px; margin:auto; box-shadow:0 4px 12px rgba(0,0,0,0.1); }
-  h2 { color:#007BFF; }
-  .row { margin:10px 0; }
-  #qrCode { margin-top:20px; text-align:center; }
-  button { background:#28a745; color:#fff; border:none; padding:10px 15px; border-radius:6px; cursor:pointer; }
+  body { font-family: Arial, sans-serif; background:#f5f5f5; padding:20px; }
+  .container { max-width:600px; margin:auto; background:#fff; padding:20px; border-radius:10px; }
+  h2 { text-align:center; }
+  .summary div { margin-bottom:10px; font-size:18px; }
+  .amount { font-size:22px; color:green; font-weight:bold; }
+  .button-container{
+      border: 1px solid black;
+      border-radius: 15px;
+      display: flex;
+      padding: 10px;
+      width: fit-content;
+      cursor: pointer;
+      background: #000;
+      color:#fff;
+      margin:auto;
+      margin-top:20px;
+  }
+  .text-container{
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-left: 10px;
+      justify-content: center;
+      margin-right: 10px;
+  }
+  .logo-container{ width: 40px; height: 40px; }
+  .seconday-logo-container{ width: 16px; height: 16px; vertical-align: middle; }
+  a{ text-decoration:none; color:inherit; }
 </style>
 </head>
+
 <body>
-  <div class="card">
-    <h2>💳 EV Charging Payment</h2>
-    <div class="row"><b>Station:</b> <span id="stationName"></span></div>
-    <div class="row"><b>Date & Time:</b> <span id="dateTime"></span></div>
-    <div class="row"><b>Duration (hrs):</b> <span id="duration"></span></div>
-    <div class="row"><b>Approx. Amount:</b> ₹<span id="amount"></span></div>
 
-    <div id="qrCode"></div>
+<div class="container">
+  <h2>EV Charging Payment Details</h2>
 
-    <button id="payBtn">Pay Now</button>
+  <div class="summary">
+    <div><b>Station:</b> <span id="stationName">-</span></div>
+    <div><b>Vehicle Type:</b> <span id="vehicleType">-</span></div>
+    <div><b>Duration (hrs):</b> <span id="duration">-</span></div>
+    <div class="amount">₹ <span id="amount">0</span></div>
   </div>
 
-  <!-- QR Code library -->
-  <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
-  <script>
-    // Fetch booking from localStorage
-    const booking = JSON.parse(localStorage.getItem('pendingPayment'));
-    if (!booking) {
-      alert('No booking found! Go back and select a slot.');
-      window.location.href = 'dashboard.html';
-    }
+  <!-- Your original Cashfree button (unchanged) -->
+  <form>
+    <a href="https://payments.cashfree.com/forms/mybooking" target="_parent">
+      <div class="button-container">
+        <div>
+          <img src="https://cashfree-checkoutcartimages-prod.cashfree.com/logom9hvk5m7aj1g_prod.jpg" alt="logo" class="logo-container">
+        </div>
+        <div class="text-container">
+          <div style="font-size: 14px; margin-bottom: 5px;">Pay Now</div>
+          <div style="font-size: 10px;">
+            <span>Powered By Cashfree</span>
+            <img src="https://cashfreelogo.cashfree.com/cashfreepayments/logosvgs/Group_4355.svg" alt="logo" class="seconday-logo-container">
+          </div>
+        </div>
+      </div>
+    </a>
+  </form>
+</div>
 
-    const stationEl = document.getElementById('stationName');
-    const dateTimeEl = document.getElementById('dateTime');
-    const durationEl = document.getElementById('duration');
-    const amountEl = document.getElementById('amount');
-    const qrCodeEl = document.getElementById('qrCode');
+<script>
+  // Pricing per hour based on vehicle
+  const priceRules = {
+    "2W": 20,
+    "3W": 30,
+    "4W": 50,
+    "Bus": 100,
+    "Truck": 150
+  };
 
-    stationEl.textContent = booking.station;
-    dateTimeEl.textContent = booking.date + ' ' + booking.time;
-    durationEl.textContent = booking.duration;
+  // Get values from localStorage (set from dashboard)
+  const station = localStorage.getItem("selectedStation") || "Unknown";
+  const vehicleType = localStorage.getItem("selectedVehicleType") || "-";
+  const duration = parseInt(localStorage.getItem("selectedDuration")) || 1;
 
-    // Approx. pricing rule: e.g., ₹20 per hour
-    const ratePerHour = 20;
-    const amount = booking.duration * ratePerHour;
-    amountEl.textContent = amount;
+  // Calculate price
+  const rate = priceRules[vehicleType] || 0;
+  const amount = rate * duration;
 
-    // Generate QR code (e.g., Cashfree / GPay URL)
-    const paymentUrl = `https://cashfree.com/pay?amount=${amount}&station=${encodeURIComponent(booking.station)}&date=${booking.date}&time=${booking.time}&duration=${booking.duration}`;
-    QRCode.toCanvas(qrCodeEl, paymentUrl, { width:200 }, function (error) {
-      if (error) console.error(error);
-    });
+  // Display values
+  document.getElementById("stationName").textContent = station;
+  document.getElementById("vehicleType").textContent = vehicleType;
+  document.getElementById("duration").textContent = duration;
+  document.getElementById("amount").textContent = amount;
+</script>
 
-    document.getElementById('payBtn').addEventListener('click', () => {
-      // redirect to payment URL
-      window.open(paymentUrl, '_blank');
-    });
-  </script>
 </body>
 </html>
