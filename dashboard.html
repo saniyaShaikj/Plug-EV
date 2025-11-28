@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8" />
@@ -13,13 +13,10 @@
     :root { --brand:#007BFF; --ok:#28a745; --warn:#ffc107; --bad:#dc3545; --bg:#f5f7fa; }
     body { margin:0; font-family:Inter, Arial, sans-serif; background:var(--bg); color:#111; }
     .topbar { background:var(--brand); color:#fff; padding:10px 16px; display:flex; justify-content:space-between; align-items:center; }
-    .topbar .title { font-weight:700; }
-    .topbar button { background:#dc3545; color:#fff; border:none; padding:6px 10px; border-radius:6px; cursor:pointer; }
     .wrap { display:grid; grid-template-columns: 1fr 420px; gap:14px; padding:14px; align-items:start; }
     #map { height:520px; border-radius:10px; box-shadow:0 6px 18px rgba(0,0,0,0.08); }
     .right { max-height:520px; overflow:auto; }
     .panel { background:#fff; padding:12px; border-radius:10px; box-shadow:0 4px 12px rgba(0,0,0,0.05); margin-bottom:12px; }
-    .controls { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
     input[type=number], select, input[type=date], input[type=time], input[type=text] { padding:8px; border-radius:6px; border:1px solid #d0d7df; }
     button.primary { background:var(--brand); color:#fff; padding:8px 12px; border-radius:6px; border:none; cursor:pointer; }
     button.ghost { background:transparent; border:1px solid #e6eefb; color:var(--brand); padding:6px 10px; border-radius:6px; cursor:pointer; }
@@ -113,7 +110,6 @@
 
         <div style="display:flex;gap:8px;margin-top:8px;align-items:center;">
           <label class="small">Duration (hrs)</label>
-          <!-- readonly text field showing auto-filled duration -->
           <input id="autoDuration" type="text" readonly style="width:60px;">
         </div>
 
@@ -123,9 +119,7 @@
           <button class="primary" onclick="loadSlotGrid()">Show Slots</button>
         </div>
 
-        <div id="slotGridWrap" style="margin-top:10px;">
-          <!-- dynamic slots grid inserted here -->
-        </div>
+        <div id="slotGridWrap" style="margin-top:10px;"></div>
 
         <div style="display:flex;gap:8px;align-items:center;margin-top:10px;">
           <button class="primary" onclick="confirmBooking()">Confirm Booking</button>
@@ -156,20 +150,24 @@
 
   <script>
   // -------------------------
-  // Data & Initialization
+  // Constants & Storage
   // -------------------------
   if (!localStorage.getItem('loggedInUser')) localStorage.setItem('loggedInUser','guest');
+  const STORAGE_KEY = 'ev_allBookings_v1';
+  const TIMES = ["08:00","09:00","10:00","11:00","12:00","13:00","14:00","15:00","16:00","17:00"];
 
-  // === Stations array: existing + many Pune area stations (addresses included) ===
+  function getAllBookings(){ return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); }
+  function saveAllBookings(b){ localStorage.setItem(STORAGE_KEY, JSON.stringify(b)); }
+
+  // -------------------------
+  // Stations (same as your list)
+  // -------------------------
   const stations = [
-    // Original / central
     { name: "EV DOCK, Agarkar Nagar, Pune", lat: 18.5278742926, lon: 73.8765824281, guns: 4 },
     { name: "Tata Power Station, N Main Road, Koregaon Park, Pune", lat: 18.48106, lon: 73.863069, guns: 3 },
     { name: "Phoenix Marketcity, Viman Nagar, Pune", lat: 18.567, lon: 73.914, guns: 5 },
     { name: "GoEGO, Westend Mall, Aundh, Pune", lat: 18.5678, lon: 73.7800, guns: 3 },
     { name: "Synergy E Mobility, Talegaon, Pune", lat: 18.7326, lon: 73.6738, guns: 6 },
-
-    // Within Pune city
     { name: "Baner FastCharge Hub, Baner, Pune", lat: 18.5596, lon: 73.7795, guns: 6 },
     { name: "Hinjewadi Rapid Charge, Hinjewadi Phase 1, Pune", lat: 18.5976, lon: 73.7388, guns: 5 },
     { name: "Koregaon Park EV Plaza, Koregaon Park, Pune", lat: 18.5366, lon: 73.8950, guns: 4 },
@@ -183,17 +181,11 @@
     { name: "Wadgaon Sheri Station, Wadgaon Sheri, Pune", lat: 18.5360, lon: 73.9255, guns: 3 },
     { name: "Kharadi Charge Hub, Kharadi, Pune", lat: 18.5392, lon: 73.9146, guns: 5 },
     { name: "Lohgaon Airport Station, Near Pune Airport, Lohgaon, Pune", lat: 18.5820, lon: 73.9110, guns: 3 },
-
-    // Pimpri-Chinchwad & nearby
     { name: "Pimpri EV Plaza, Pimpri-Chinchwad, Pune", lat: 18.6298, lon: 73.7997, guns: 5 },
     { name: "Bhosari Charge Station, Bhosari, Pimpri-Chinchwad, Pune", lat: 18.6206, lon: 73.8403, guns: 4 },
-
-    // Around Pune / nearby towns
     { name: "Lonavala FastCharge, Lonavala, Pune District", lat: 18.7500, lon: 73.4090, guns: 4 },
     { name: "Talegaon EV Point, Talegaon, Maval, Pune", lat: 18.7478, lon: 73.7096, guns: 4 },
     { name: "Chakan Charge Hub, Chakan, Pune", lat: 18.7570, lon: 73.9204, guns: 6 },
-
-    // Newly requested stations with real approximate addresses
     { name: "Würth e-Motion EV Charging Station, Baner, Pune", lat: 18.5610, lon: 73.7768, guns: 4 },
     { name: "ChaneGrid Charging Station, Kothrud, Pune", lat: 18.5048, lon: 73.8280, guns: 3 },
     { name: "Oxy Ultima1 Charging Station, Mundhwa / Hadapsar Road, Pune", lat: 18.5040, lon: 73.9230, guns: 5 },
@@ -216,42 +208,20 @@
     { name: "Power Bank EV Station (Bhavani Peth), Bhavani Peth, Pune", lat: 18.5090, lon: 73.8715, guns: 3 }
   ];
 
-  // Timeslots for theatre style (columns)
-  const TIMES = ["08:00","09:00","10:00","11:00","12:00","13:00","14:00","15:00","16:00","17:00"];
-
-  // localStorage key used to share bookings across users/tabs
-  const STORAGE_KEY = 'ev_allBookings_v1';
-
-  function getAllBookings(){ return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); }
-  function saveAllBookings(b){ localStorage.setItem(STORAGE_KEY, JSON.stringify(b)); }
-
-  // Primitive OCPP-like logger
-  const stationLogEl = document.getElementById('stationLog');
-  function logStation(txt){
-    const t = new Date().toLocaleString();
-    stationLogEl.innerHTML = `[${t}] ${txt}<br>` + stationLogEl.innerHTML;
-  }
-
-  // Map init
+  // -------------------------
+  // Map init & icons
+  // -------------------------
   const map = L.map('map').setView([18.5204,73.8567], 12);
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{ attribution:'© OpenStreetMap contributors' }).addTo(map);
+
   const userIcon = L.icon({ iconUrl:'https://cdn-icons-png.flaticon.com/512/64/64113.png', iconSize:[32,32], iconAnchor:[16,32] });
- // Replace old station icon with EV plug icon
-const stationIcon = L.icon({
-  iconUrl:'https://cdn-icons-png.flaticon.com/512/684/684908.png', // flag icon
-  iconSize:[30,30],
-  iconAnchor:[15,30],
-  popupAnchor:[0,-25]
-});
+  const stationIcon = L.icon({ iconUrl:'https://cdn-icons-png.flaticon.com/512/684/684908.png', iconSize:[30,30], iconAnchor:[15,30], popupAnchor:[0,-25] });
 
-
-
-  // We'll keep markers to update content
   let markers = [];
   let userMarker = null;
   let routingControl = null;
 
-  // UI elements
+  // UI refs
   const stationSelect = document.getElementById('stationSelect');
   const stationSelectCompact = document.getElementById('stationSelectCompact');
   const stationListEl = document.getElementById('stationList');
@@ -259,40 +229,34 @@ const stationIcon = L.icon({
   const gunsInfoEl = document.getElementById('gunsInfo');
   const slotGridWrap = document.getElementById('slotGridWrap');
   const directionsContent = document.getElementById('directionsContent');
+  const stationLogEl = document.getElementById('stationLog');
 
-  // fill select boxes
-  function populateStationSelectors(){
-    stationSelect.innerHTML = '';
-    stationSelectCompact.innerHTML = '';
-    stations.forEach(s => {
-      const opt = document.createElement('option'); opt.value=s.name; opt.textContent=s.name;
-      stationSelect.appendChild(opt);
-      const opt2 = opt.cloneNode(true);
-      stationSelectCompact.appendChild(opt2);
-    });
-    updateGunsInfo();
+  function logStation(txt){
+    const t = new Date().toLocaleString();
+    stationLogEl.innerHTML = `[${t}] ${txt}<br>` + stationLogEl.innerHTML;
   }
-  populateStationSelectors();
 
   // -------------------------
   // Helpers
   // -------------------------
+  function findStation(name){ return stations.find(s=>s.name===name); }
+
+  // Haversine
   function getDistanceKm(lat1,lon1,lat2,lon2){
     const R = 6371;
-    const dLat = (lat2-lat1)*Math.PI/180;
-    const dLon = (lon2-lon1)*Math.PI/180;
-    const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)**2;
-    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    const dLat = (lat2-lat1) * Math.PI/180;
+    const dLon = (lon2-lon1) * Math.PI/180;
+    const a = Math.sin(dLat/2)*Math.sin(dLat/2) + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)*Math.sin(dLon/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return R * c;
   }
-
-  function findStation(name){ return stations.find(s=>s.name===name); }
 
   function getBookedCountForStation(stationName, date=null){
     const bookings = getAllBookings();
     return bookings.filter(b => b.station===stationName && (date? b.date===date : true)).length;
   }
 
-  // returns a map: { "Gun 1": { "08:00": bookingObj? }, ... }
+  // build matrix for a station and date
   function buildSlotMatrix(stationName, date){
     const st = findStation(stationName);
     const guns = st.guns;
@@ -310,80 +274,89 @@ const stationIcon = L.icon({
   }
 
   // -------------------------
-  // Map & markers (all markers individually)
+  // Populate selects & initial render
+  // -------------------------
+  function populateStationSelectors(){
+    stationSelect.innerHTML = '';
+    stationSelectCompact.innerHTML = '';
+    stations.forEach(s => {
+      const opt = document.createElement('option'); opt.value=s.name; opt.textContent=s.name;
+      stationSelect.appendChild(opt);
+      stationSelectCompact.appendChild(opt.cloneNode(true));
+    });
+    updateGunsInfo();
+  }
+
+  populateStationSelectors();
+
+  // -------------------------
+  // Render markers (filteredStations optional)
   // -------------------------
   function renderMarkers(filteredStations){
-    // clear existing markers
     markers.forEach(m => m.remove());
     markers = [];
 
     (filteredStations || stations).forEach(s => {
       const bookedTotal = getBookedCountForStation(s.name);
       const available = Math.max(0, s.guns - bookedTotal);
-      const popupContent = document.createElement('div');
-      popupContent.className = 'station-popup';
-      popupContent.innerHTML = `<b>${s.name}</b><br>
+      const popupId = `popupSlots_${s.name.replace(/\W/g,'_')}`;
+
+      const popupContent = `<div class="station-popup"><b>${s.name}</b><br>
         Total Guns: ${s.guns} <br>
         Booked: ${bookedTotal} <br>
         Available: ${available} <hr>
-        <div id="popupSlots_${s.name.replace(/\W/g,'_')}">Loading slots...</div>
-        <button onclick="openSlotPanel('${s.name}')">Open Slots</button>
-        <button onclick="routeToStation(${s.lat},${s.lon}, '${s.name}')">Route & Directions</button>`;
+        <div id="${popupId}">Loading slots...</div>
+        <div style="margin-top:6px">
+          <button onclick="openSlotPanel('${s.name}')">Open Slots</button>
+          <button onclick="routeToStation(${s.lat},${s.lon}, '${s.name}')">Route & Directions</button>
+        </div>
+      </div>`;
 
-      const marker = L.marker([s.lat, s.lon], {icon:stationIcon}).addTo(map);
-      marker.bindPopup(popupContent);
+      const marker = L.marker([s.lat, s.lon], {icon:stationIcon}).addTo(map).bindPopup(popupContent);
       markers.push(marker);
 
-      // After adding marker, populate slot list summary into popup's div (simple)
+      // populate summary after small delay to ensure popup element exists in DOM when opened
       setTimeout(() => {
-        const el = document.getElementById(`popupSlots_${s.name.replace(/\W/g,'_')}`);
+        const el = document.getElementById(popupId);
         if (!el) return;
         const bookings = getAllBookings().filter(b => b.station===s.name);
-        if (bookings.length===0) el.innerHTML = '<small>No booked slots</small>';
-        else {
-          el.innerHTML = bookings.slice(-4).map(b=> `📅 ${b.date} ${b.time} (Gun ${b.gun})`).join('<br>');
-        }
+        el.innerHTML = bookings.length === 0 ? '<small>No booked slots</small>' : bookings.slice(-4).map(b=> `📅 ${b.date} ${b.time} (Gun ${b.gun})`).join('<br>');
       }, 120);
     });
 
-    // Auto-zoom to show all markers (if any)
-    if (markers.length) {
-      const group = L.featureGroup(markers);
+    if (markers.length){
       try {
-        map.fitBounds(group.getBounds().pad(0.15));
-      } catch(e) {
-        // fallback: keep current view
-      }
+        map.fitBounds(L.featureGroup(markers).getBounds().pad(0.15));
+      } catch(e){ /* ignore */ }
     }
   }
 
-  // initial full render
+  // initial
   renderMarkers();
 
   // -------------------------
-  // SOC-based station detection
+  // SOC-based detection
   // -------------------------
   function checkStations(){
     const soc = parseInt(document.getElementById('socInput').value);
-    if (isNaN(soc) || soc<0 || soc>100){ alert('Enter valid SOC 0–100'); return; }
+    if (isNaN(soc) || soc < 0 || soc > 100){ alert('Enter valid SOC 0–100'); return; }
 
     if (!navigator.geolocation){ alert('Geolocation not available'); return; }
+
     navigator.geolocation.getCurrentPosition(pos => {
       const uLat = pos.coords.latitude, uLon = pos.coords.longitude;
       if (userMarker) userMarker.remove();
       userMarker = L.marker([uLat,uLon], {icon:userIcon}).addTo(map).bindPopup(`You (SOC: ${soc}%)`).openPopup();
       map.setView([uLat,uLon], 13);
 
-      // max reach distance (simple linear model): km per % = 1 km per %
+      // simple model: 1 km per 1% SOC (same as you used)
       const maxDist = soc * 1;
       const reachable = stations.map(s => ({...s, distance: getDistanceKm(uLat,uLon,s.lat,s.lon)}))
                                 .filter(s => s.distance <= maxDist)
                                 .sort((a,b)=>a.distance-b.distance);
 
-      // render markers only for reachable
       renderMarkers(reachable);
 
-      // station list
       stationListEl.innerHTML = `<div class="small">Stations within ${maxDist.toFixed(1)} km:</div>`;
       reachable.forEach(s => {
         const booked = getBookedCountForStation(s.name);
@@ -398,25 +371,24 @@ const stationIcon = L.icon({
         stationListEl.appendChild(div);
       });
 
+      logStation(`SOC scan: ${reachable.length} reachable (SOC ${soc}%)`);
     }, err => alert('Error getting location: ' + err.message));
   }
 
-  function showAllStations(){
-    renderMarkers(stations);
-    stationListEl.innerHTML = '<div class="small">All stations shown</div>';
-  }
+  function showAllStations(){ renderMarkers(); stationListEl.innerHTML = '<div class="small">All stations shown</div>'; }
 
-  // route/directions
+  // -------------------------
+  // Routing
+  // -------------------------
   function routeToStation(lat, lon, name){
     if (!userMarker){
-      // try to get location quickly
       if (navigator.geolocation){
         navigator.geolocation.getCurrentPosition(pos => {
           const uLat = pos.coords.latitude, uLon = pos.coords.longitude;
           if (userMarker) userMarker.remove();
           userMarker = L.marker([uLat,uLon], {icon:userIcon}).addTo(map).bindPopup(`You`).openPopup();
           map.setView([uLat,uLon], 13);
-          _doRoute(uLat, uLon, lat, lon, name);
+          _doRoute(uLat,uLon,lat,lon,name);
         }, err => { alert('Need permission to get your location for routing.'); });
       } else alert('Geolocation not supported.');
     } else {
@@ -430,58 +402,50 @@ const stationIcon = L.icon({
     routingControl = L.Routing.control({
       waypoints: [L.latLng(ulat,ulon), L.latLng(tlat,tlon)],
       router: L.Routing.osrmv1({ serviceUrl:'https://router.project-osrm.org/route/v1' }),
-      routeWhileDragging:false, show:false, lineOptions:{styles:[{color:varToHex('--brand')||'#007bff', weight:4}]}
+      routeWhileDragging:false, show:false, lineOptions:{styles:[{color:getComputedStyle(document.documentElement).getPropertyValue('--brand')||'#007bff', weight:4}]}
     }).addTo(map);
     routingControl.on('routesfound', e => {
       const r = e.routes[0];
       const distKm = (r.summary.totalDistance/1000).toFixed(2);
       const mins = Math.round(r.summary.totalTime/60);
       let html = `<b>${name}</b><br>Total: ${distKm} km — ${mins} mins<hr><ul>`;
-      if (r.instructions && r.instructions.length){
-        r.instructions.forEach(si => html += `<li>${si.text}</li>`);
-      } else {
-        html += `<li>Follow the blue route on the map.</li>`;
-      }
-      html += '</ul>';
+      html += `<li>Follow the blue route on the map.</li>`;
+      html += `</ul>`;
       directionsContent.innerHTML = html;
+      logStation(`Routing to ${name} — ${distKm} km, ${mins} mins`);
     });
   }
 
-  // small helper to read CSS color var (for route line)
-  function varToHex(v){ try{ return getComputedStyle(document.documentElement).getPropertyValue(v).trim(); }catch(e){return null;} }
-
   // -------------------------
-  // Slot grid (theatre style)
+  // Slot grid & selection
   // -------------------------
   let selected = { station:null, date:null, time:null, gun:null, duration:1 };
 
   function updateGunsInfo(){
     const name = stationSelect.value;
-    if (!name) return;
+    if (!name) { gunsInfoEl.textContent = ''; return; }
     const st = findStation(name);
     gunsInfoEl.textContent = st ? `${st.guns} guns` : '';
   }
   stationSelect.addEventListener('change', updateGunsInfo);
-  stationSelectCompact.addEventListener('change', ()=>{ /* no-op */ });
 
   function openSlotPanel(stationName){
     stationSelect.value = stationName;
     document.getElementById('dateInput').valueAsDate = new Date();
     updateGunsInfo();
     loadSlotGrid();
-    // scroll right panel into view (small UX)
     document.querySelector('.right').scrollIntoView({ behavior:'smooth' });
   }
 
   function loadSlotGrid(){
     const stationName = stationSelect.value;
     const date = document.getElementById('dateInput').value;
-    // read duration from autoDuration field (auto-set via vehicle selection)
     const durationVal = document.getElementById('autoDuration').value;
     const duration = parseInt(durationVal || '1',10);
 
     if (!stationName){ alert('Choose station'); return; }
     if (!date){ alert('Choose date'); return; }
+
     selected.station = stationName;
     selected.date = date;
     selected.duration = duration;
@@ -490,27 +454,24 @@ const stationIcon = L.icon({
     const st = findStation(stationName);
     const matrix = buildSlotMatrix(stationName, date);
 
-    // Build grid: header with times, rows per gun
     slotGridWrap.innerHTML = '';
-    const header = document.createElement('div');
-    header.className = 'slots-header small';
+    const header = document.createElement('div'); header.className='slots-header small';
     header.innerHTML = `<div style="min-width:80px;font-weight:600">Gun \\ Time</div>` + TIMES.map(t=>`<div style="min-width:80px;text-align:center;font-weight:600">${t}</div>`).join('');
     slotGridWrap.appendChild(header);
 
-    // rows
     for (let g=1; g<=st.guns; g++){
-      const rowDiv = document.createElement('div'); rowDiv.className = 'slot-row';
+      const rowDiv = document.createElement('div'); rowDiv.className='slot-row';
       const gunLabel = document.createElement('div'); gunLabel.style.minWidth='80px'; gunLabel.style.fontWeight='600'; gunLabel.style.padding='8px'; gunLabel.textContent = `Gun ${g}`;
       rowDiv.appendChild(gunLabel);
 
       TIMES.forEach(time => {
         const booking = matrix['Gun ' + g][time];
-        const cell = document.createElement('div'); cell.className = 'slot-cell';
+        const cell = document.createElement('div'); cell.className='slot-cell';
         cell.style.minWidth = '80px';
         cell.textContent = time;
         if (booking){
           cell.classList.add('booked');
-          cell.title = `Booked by: ${booking.id}\nAt: ${booking.bookingDateTime}`;
+          cell.title = `Booked by: ${booking.user}\nAt: ${booking.bookingDateTime}`;
         } else {
           cell.classList.add('available');
           cell.onclick = () => selectCell(cell, stationName, date, time, g);
@@ -521,7 +482,7 @@ const stationIcon = L.icon({
       slotGridWrap.appendChild(rowDiv);
     }
 
-    // small legend
+    // legend
     const legend = document.createElement('div'); legend.className='small'; legend.style.marginTop='8px';
     legend.innerHTML = `<span style="display:inline-block;width:12px;height:12px;background:${getComputedStyle(document.documentElement).getPropertyValue('--ok')};margin-right:6px;border-radius:3px"></span> Available &nbsp;
                         <span style="display:inline-block;width:12px;height:12px;background:${getComputedStyle(document.documentElement).getPropertyValue('--bad')};margin-right:6px;border-radius:3px;margin-left:10px"></span> Booked &nbsp;
@@ -530,14 +491,12 @@ const stationIcon = L.icon({
   }
 
   function selectCell(cellEl, station, date, time, gun){
-    // clear previous selected
     document.querySelectorAll('.slot-cell.selected').forEach(x=>x.classList.remove('selected'));
     cellEl.classList.add('selected');
     selected.station = station;
     selected.date = date;
     selected.time = time;
     selected.gun = String(gun);
-    // auto set booking form's date & station
     document.getElementById('dateInput').value = date;
     updateGunsInfo();
   }
@@ -545,105 +504,120 @@ const stationIcon = L.icon({
   function clearSelection(){
     selected = { station:null, date:null, time:null, gun:null, duration:1 };
     document.querySelectorAll('.slot-cell.selected').forEach(x=>x.classList.remove('selected'));
-    // clear vehicle fields & auto duration
     document.getElementById('vehicleType').value = "";
-    populateManufacturers(""); // reset manufacturer dropdown
+    populateManufacturers("");
     document.getElementById('autoDuration').value = "";
   }
 
   // -------------------------
-  // Confirm booking
+  // Confirm booking (fixed)
   // -------------------------
-  // This function runs when user clicks "Book"
-function confirmBooking() {
+  function confirmBooking(){
+    const loggedUser = localStorage.getItem('loggedInUser') || 'guest';
 
-  // 1️⃣ Get values from your input fields
-  const userName = document.getElementById("userName").value;
-  const selectedStation = document.getElementById("station").value;
-  const selectedDate = document.getElementById("date").value;
-  const selectedTime = document.getElementById("time").value;
-  const selectedGun = document.getElementById("gun").value;
-
-  // 2️⃣ Prepare the booking data
-  const bookingData = {
-    id: Date.now(),        // unique ID
-    user: userName,
-    station: selectedStation,
-    date: selectedDate,
-    time: selectedTime,
-    gun: selectedGun,
-    status: "Pending"
-  };
-
-  // 3️⃣ Send it to Google Sheet (Step 3)
-  fetch("https://script.google.com/macros/s/AKfycbxcbay1-7R7HHVx9qDfb2JTYBEwuhkL7xRmFWZoiiKV5L2dI4F93FIziW93om95ujdy/exec", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(bookingData)
-  })
-  .then(response => response.json())
-  .then(result => console.log("Booking sent:", result))
-  .catch(error => console.error("Error sending booking:", error));
-}
-
-  // Render bookings list (for this user; show all)
-  // Render bookings list (for this user; show all)
-function renderBookings(){
-  const all = getAllBookings();
-  const loggedUser = localStorage.getItem('loggedInUser') || 'guest';
-  if (!all.length) {
-    bookingHistoryEl.innerHTML = '<div class="small">No bookings yet.</div>';
-    return;
-  }
-
-  bookingHistoryEl.innerHTML = '';
-  all.slice().reverse().forEach((b) => {
-    const div = document.createElement('div');
-    div.className = 'booking-item';
-    div.innerHTML = `
-      <b>${b.station}</b><br>${b.date} ${b.time} — Gun ${b.gun}<br>
-      <small>Booked at: ${b.bookingDateTime}</small><br>
-      <small>Booked by: ${b.user}</small>
-    `;
-
-    // ✅ Show Cancel button only for the user who booked
-    if (b.user === loggedUser) {
-      const cancelBtn = document.createElement('button');
-      cancelBtn.className = 'ghost';
-      cancelBtn.textContent = 'Cancel';
-      cancelBtn.onclick = () => cancelBooking(b.id);
-      div.appendChild(cancelBtn);
+    // If user hasn't selected slot via grid, try reading station+date+time fields (time not present as input), so require grid selection.
+    if (!selected.station || !selected.date || !selected.time || !selected.gun){
+      alert('Please select a slot from the grid before confirming the booking.');
+      return;
     }
 
-    bookingHistoryEl.appendChild(div);
-  });
-}
+    // Build booking object
+    const booking = {
+      id: Date.now(),
+      user: loggedUser,
+      station: selected.station,
+      date: selected.date,
+      time: selected.time,
+      gun: selected.gun,
+      duration: selected.duration || 1,
+      bookingDateTime: new Date().toISOString()
+    };
 
-// Secure cancel: only the booking owner can cancel
-function cancelBooking(id){
-  const loggedUser = localStorage.getItem('loggedInUser') || 'guest';
-  let all = getAllBookings();
-  const b = all.find(x => x.id === id);
-  if (!b) { alert('Booking not found'); return; }
+    // Save to storage
+    const all = getAllBookings();
+    // Ensure slot is still free (race condition safety)
+    const conflict = all.find(b => b.station===booking.station && b.date===booking.date && b.time===booking.time && b.gun===booking.gun);
+    if (conflict){
+      alert('Sorry — that slot was just taken. Please choose another.');
+      renderBookings();
+      loadSlotGrid();
+      renderMarkers();
+      return;
+    }
 
-  // ✅ Prevent others from canceling
-  if (b.user !== loggedUser) {
-    alert('⚠️ You can only cancel your own bookings.');
-    return;
+    all.push(booking);
+    saveAllBookings(all);
+
+    logStation(`✅ Booking created: ${booking.station} | ${booking.date} ${booking.time} | Gun ${booking.gun} by ${booking.user}`);
+    alert('Booking confirmed ✔️');
+      // <-- ADD YOUR LOCALSTORAGE LINES HERE -->
+    localStorage.setItem('selectedStation', selected.station);
+    localStorage.setItem('selectedVehicleType', document.getElementById('vehicleType').value);
+    localStorage.setItem('selectedDuration', selected.duration);
+    window.location.href = "payment.html";
+
+    // refresh UI
+    renderBookings();
+    loadSlotGrid();
+    renderMarkers();
+
+    // clear selection so user doesn't accidentally re-book
+    clearSelection();
   }
 
-  if (!confirm(`Cancel booking at ${b.station} ${b.date} ${b.time} Gun ${b.gun}?`)) return;
+  // -------------------------
+  // Bookings UI
+  // -------------------------
+  function renderBookings(){
+    const all = getAllBookings();
+    const loggedUser = localStorage.getItem('loggedInUser') || 'guest';
+    if (!all.length) {
+      bookingHistoryEl.innerHTML = '<div class="small">No bookings yet.</div>';
+      return;
+    }
 
-  all = all.filter(x => x.id !== id);
-  saveAllBookings(all);
-  logStation(`❌ Booking canceled: ${b.station} | ${b.date} ${b.time} | Gun ${b.gun}`);
-  renderBookings();
-  loadSlotGrid();
-  renderMarkers();
-}
+    bookingHistoryEl.innerHTML = '';
+    all.slice().reverse().forEach((b) => {
+      const div = document.createElement('div');
+      div.className = 'booking-item';
+      div.innerHTML = `
+        <b>${b.station}</b><br>${b.date} ${b.time} — Gun ${b.gun}<br>
+        <small>Booked at: ${new Date(b.bookingDateTime).toLocaleString()}</small><br>
+        <small>Booked by: ${b.user}</small>
+      `;
+
+      if (b.user === loggedUser) {
+        const cancelBtn = document.createElement('button');
+        cancelBtn.className = 'ghost';
+        cancelBtn.textContent = 'Cancel';
+        cancelBtn.onclick = () => cancelBooking(b.id);
+        div.appendChild(cancelBtn);
+      }
+
+      bookingHistoryEl.appendChild(div);
+    });
+  }
+
+  function cancelBooking(id){
+    const loggedUser = localStorage.getItem('loggedInUser') || 'guest';
+    let all = getAllBookings();
+    const b = all.find(x => x.id === id);
+    if (!b) { alert('Booking not found'); return; }
+
+    if (b.user !== loggedUser) { alert('⚠️ You can only cancel your own bookings.'); return; }
+
+    if (!confirm(`Cancel booking at ${b.station} ${b.date} ${b.time} Gun ${b.gun}?`)) return;
+
+    all = all.filter(x => x.id !== id);
+    saveAllBookings(all);
+    logStation(`❌ Booking canceled: ${b.station} | ${b.date} ${b.time} | Gun ${b.gun}`);
+    renderBookings();
+    loadSlotGrid();
+    renderMarkers();
+  }
 
   // -------------------------
-  // Vehicle type => manufacturer lists
+  // Vehicle manufacturers & duration rules
   // -------------------------
   const manufByType = {
     "2W": ["Ather","Ola","TVS","Hero Electric","Bajaj Chetak"],
@@ -656,62 +630,48 @@ function cancelBooking(id){
 
   function populateManufacturers(vehicleType){
     const mEl = document.getElementById("manufacturer");
-    mEl.innerHTML = ""; // clear
+    mEl.innerHTML = "";
     if (!vehicleType){
       const opt = document.createElement('option'); opt.value=""; opt.textContent = "Select Vehicle Type First"; opt.disabled = true; opt.selected = true;
-      mEl.appendChild(opt);
-      mEl.disabled = true;
-      return;
+      mEl.appendChild(opt); mEl.disabled = true; return;
     }
     const list = manufByType[vehicleType] || [];
     const placeholder = document.createElement('option'); placeholder.value=""; placeholder.textContent = "Select manufacturer"; placeholder.disabled = true; placeholder.selected = true;
     mEl.appendChild(placeholder);
-    list.forEach(name => {
-      const opt = document.createElement('option'); opt.value = name; opt.textContent = name;
-      mEl.appendChild(opt);
-    });
+    list.forEach(name => { const opt = document.createElement('option'); opt.value = name; opt.textContent = name; mEl.appendChild(opt); });
     mEl.disabled = false;
   }
 
   document.getElementById("vehicleType").addEventListener("change", function(e){
     const vt = e.target.value;
     populateManufacturers(vt);
-    // clear auto duration until manufacturer chosen (but some rules may use only type)
-    autoSetDuration(); // will set duration based on type alone if manufacturer not selected
+    autoSetDuration();
   });
 
-  // -------------------------
-  // Duration auto-set rules (vehicle type + manufacturer)
-  // -------------------------
   const durationRules = {
-    "2W": { "Ather":1, "Ola":1, "TVS":1, "Hero Electric":1, "Bajaj Chetak":1, "Okinawa Autotech":1, "default":1 },
-    "3W": { "Mahindra":2, "Piaggio":2, "Ola 3W":2, "default":2 },
-    "4W": { "Tata":2, "BYD":3, "Mahindra":2, "MG":2, "Hyundai":2, "default":2 },
-    "Bus": { "Tata Motors":4, "BYD":5, "Ashok Leyland":4, "Olectra":4, "default":4 },
-    "Truck": { "Eicher":5, "Tata Motors":5, "Ashok Leyland":5, "BYD":5, "default":5 },
-    "ERickshaw": { "Mahindra":1, "Kinetic":1, "Piaggio":1, "Atul":1, "default":1 }
+    "2W": { "default":1 },
+    "3W": { "default":2 },
+    "4W": { "default":2 },
+    "Bus": { "default":4 },
+    "Truck": { "default":5 },
+    "ERickshaw": { "default":1 }
   };
 
   function autoSetDuration(){
-    const vEl = document.getElementById("vehicleType");
-    const mEl = document.getElementById("manufacturer");
+    const v = document.getElementById("vehicleType").value;
+    const m = document.getElementById("manufacturer").value;
     const out = document.getElementById("autoDuration");
-    if(!vEl || !mEl || !out) return;
-    const v = vEl.value;
-    const m = mEl.value;
     if(!v){ out.value=""; selected.duration = 1; return; }
     const rule = durationRules[v] || { default:1 };
-    // if manufacturer chosen and has specific rule, use it; otherwise fallback to default for type
     const dur = (m && rule[m]) ? rule[m] : rule["default"] || 1;
     out.value = String(dur);
     selected.duration = parseInt(dur,10) || 1;
   }
 
-  // when user chooses manufacturer, update duration
   document.getElementById("manufacturer").addEventListener("change", autoSetDuration);
 
   // -------------------------
-  // Storage event -> sync across tabs
+  // Sync across tabs
   // -------------------------
   window.addEventListener('storage', e => {
     if (e.key === STORAGE_KEY){
@@ -729,11 +689,9 @@ function cancelBooking(id){
     populateStationSelectors();
     renderBookings();
     showAllStations();
-    // set date to today
     const today = new Date().toISOString().slice(0,10);
     document.getElementById('dateInput').value = today;
     updateGunsInfo();
-    // ensure manufacturer dropdown initial state
     populateManufacturers("");
     autoSetDuration();
   }
@@ -748,54 +706,46 @@ function cancelBooking(id){
 
   function logout(){ localStorage.removeItem('loggedInUser'); alert('Logged out'); location.reload(); }
 
-  // expose some functions for popup buttons
+  // expose for popups
   window.openSlotPanel = openSlotPanel;
   window.routeToStation = routeToStation;
   window.renderMarkers = renderMarkers;
   </script>
-</body>
-</html>
- <!-- NEXT BUTTON -->
-<button id="nextButton">Next ➡️</button>
 
+<!-- ✅ NEXT BUTTON (safe + compatible with geolocation) -->
 <style>
-  /* Floating Next button */
   #nextButton {
     position: fixed;
     bottom: 20px;
-    right: 20px;
-    background: var(--brand);
-    color: #fff;
+    right: 30px;
+    background-color: #007bff;
+    color: white;
     border: none;
-    padding: 12px 18px;
+    padding: 12px 24px;
     border-radius: 8px;
+    font-size: 16px;
     cursor: pointer;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-    font-weight: 600;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+    transition: background-color 0.3s ease;
     z-index: 9999;
-    transition: background 0.2s;
   }
-  #nextButton:hover { background: #0056b3; }
+
+  #nextButton:hover {
+    background-color: #0056b3;
+  }
 </style>
 
+<button id="nextButton">Next →</button>
+
 <script>
-  // Redirect to payment page when clicked
-  document.getElementById('nextButton').addEventListener('click', () => {
-  if (!selected.station || !selected.date || !selected.time || !selected.gun) {
-    alert('Please select a booking slot first.');
-    return;
-  }
-
-  // Save selected booking temporarily in localStorage
-  localStorage.setItem('pendingPayment', JSON.stringify({
-    station: selected.station,
-    date: selected.date,
-    time: selected.time,
-    gun: selected.gun,
-    duration: selected.duration
-  }));
-
-  window.location.href = 'payment.html';
-});
-
+  document.addEventListener("DOMContentLoaded", function() {
+    const btn = document.getElementById("nextButton");
+    if (btn) {
+      btn.addEventListener("click", function() {
+        window.location.href = "payment.html"; // change this to your next page
+      });
+    }
+  });
 </script>
+<!-- ✅ END OF NEXT BUTTON -->
+
